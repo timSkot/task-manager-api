@@ -1,0 +1,16 @@
+# Скомпилированные бинарники
+task-manager-api
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Файлы окружения с секретами (появятся, когда подключим Postgres)
+.env
+
+# Файлы IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
