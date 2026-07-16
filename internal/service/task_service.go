@@ -24,35 +24,54 @@ func (s *TaskService) Create(input model.Task) (model.Task, error) {
 		return model.Task{}, ErrInvalidTitle
 	}
 
-	return s.repo.Create(input), nil
-}
-
-func (s *TaskService) GetByID(id int) (model.Task, error) {
-	task, ok := s.repo.GetByID(id)
-	if !ok {
-		return model.Task{}, ErrTaskNotFound
+	task, err := s.repo.Create(input)
+	if err != nil {
+		return model.Task{}, err
 	}
 
 	return task, nil
 }
 
-func (s *TaskService) List() []model.Task {
-	return s.repo.List()
+func (s *TaskService) GetByID(id int) (model.Task, error) {
+	task, err := s.repo.GetByID(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return model.Task{}, ErrTaskNotFound
+		}
+		return model.Task{}, err
+	}
+
+	return task, nil
+}
+
+func (s *TaskService) List() ([]model.Task, error) {
+	tasks, err := s.repo.List()
+
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
 
 func (s *TaskService) Update(id int, input model.UpdateTaskInput) (model.Task, error) {
-	task, ok := s.repo.Update(id, input)
-	if !ok {
-		return model.Task{}, ErrTaskNotFound
+	task, err := s.repo.Update(id, input)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return model.Task{}, ErrTaskNotFound
+		}
+		return model.Task{}, err
 	}
 
 	return task, nil
 }
 
 func (s *TaskService) Delete(id int) error {
-	ok := s.repo.Delete(id)
-	if !ok {
-		return ErrTaskNotFound
+	err := s.repo.Delete(id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return ErrTaskNotFound
+		}
+		return err
 	}
 
 	return nil

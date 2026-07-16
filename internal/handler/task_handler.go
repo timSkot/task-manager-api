@@ -46,7 +46,11 @@ func (h *TaskHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 func (h *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	// вызвать h.service.List(), там нет error вообще — просто вернуть JSON
-	tasks := h.service.List()
+	tasks, err := h.service.List()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
