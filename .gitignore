@@ -4,9 +4,10 @@ task-manager-api
 *.dll
 *.so
 *.dylib
-
-# Файлы окружения с секретами (появятся, когда подключим Postgres)
 .env
+.git
+*.md
+task-manager-api
 
 # Файлы IDE
 .vscode/
