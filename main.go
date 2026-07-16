@@ -13,6 +13,8 @@ import (
 	"task-manager-api/internal/handler"
 	"task-manager-api/internal/repository"
 	"task-manager-api/internal/service"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -52,9 +54,11 @@ func main() {
 	http.HandleFunc("GET /tasks/{id}", h.GetTask)
 	http.HandleFunc("PATCH /tasks/{id}", h.UpdateTask)
 	http.HandleFunc("DELETE /tasks/{id}", h.DeleteTask)
+	http.Handle("GET /metrics", promhttp.Handler())
+	wrappedMux := handler.LoggingMiddleware(http.DefaultServeMux)
 
 	fmt.Println("Server starting on :8080...")
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", wrappedMux)
 	if err != nil {
 		fmt.Println("Server failed:", err)
 	}
