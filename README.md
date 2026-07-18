@@ -12,7 +12,8 @@
 - `golang-migrate` — миграции БД
 - `godotenv` — конфигурация через переменные окружения
 - Docker + Docker Compose
-- Prometheus — метрики и мониторинг
+- Prometheus — сбор метрик
+- Grafana — визуализация метрик и дашборды
 
 ## Архитектура
 
@@ -31,7 +32,7 @@ internal/
     metrics.go          — определения метрик Prometheus
 migrations/           — SQL-миграции (up/down)
 Dockerfile             — multi-stage сборка приложения
-docker-compose.yml     — приложение + БД + Prometheus + автоприменение миграций
+docker-compose.yml     — приложение + БД + Prometheus + Grafana + автоприменение миграций
 prometheus.yml         — конфигурация сбора метрик
 ```
 
@@ -70,12 +71,14 @@ docker-compose up --build
 2. Отдельный контейнер применяет все накопленные миграции из папки `migrations/`
 3. Собирается и запускается контейнер с приложением — только после успешного завершения миграций
 4. Поднимается контейнер Prometheus, который начинает опрашивать `/metrics` приложения каждые 5 секунд
+5. Поднимается контейнер Grafana, готовая к подключению Prometheus как источника данных
 
 Доступные адреса:
 
 - API: `http://localhost:8080`
 - Метрики (сырые, текстовый формат): `http://localhost:8080/metrics`
 - Prometheus (веб-интерфейс, графики, PromQL): `http://localhost:9090`
+- Grafana (дашборды): `http://localhost:3000` (логин/пароль по умолчанию: `admin`/`admin`)
 
 Остановить и убрать контейнеры:
 
@@ -191,7 +194,7 @@ migrate -path migrations -database "$DATABASE_URL" down 1
 
 ## Метрики и мониторинг
 
-Пример PromQL-запросов, которые можно выполнить в веб-интерфейсе Prometheus (`http://localhost:9090`):
+Пример PromQL-запросов, которые можно выполнить в веб-интерфейсе Prometheus (`http://localhost:9090`) или в панелях Grafana:
 
 ```promql
 # текущее общее число запросов по каждому методу/пути/статусу
@@ -199,7 +202,20 @@ http_requests_total
 
 # частота запросов в секунду за последнюю минуту
 rate(http_requests_total[1m])
+
+# частота запросов в секунду, сгруппированная по статус-коду
+sum by (status) (rate(http_requests_total[1m]))
 ```
+
+### Настройка Grafana
+
+При первом запуске Grafana (`http://localhost:3000`) нужно один раз подключить Prometheus как источник данных:
+
+1. **Connections → Data sources → Add data source → Prometheus**
+2. В поле **Prometheus server URL** указать `http://prometheus:9090` (имя сервиса из `docker-compose.yml`, а не `localhost` — Grafana обращается к Prometheus внутри Docker-сети)
+3. **Save & Test**
+
+После этого можно создавать дашборды (**Dashboards → New**) на основе PromQL-запросов выше.
 
 ## Тесты
 
@@ -223,5 +239,5 @@ go test -cover ./internal/service/...
 
 ## Планы по развитию
 
-- [ ] Grafana для визуализации метрик поверх Prometheus
 - [ ] Тесты для handler-слоя (httptest)
+- [ ] Провижининг дашборда Grafana как кода (чтобы не настраивать вручную при каждом поднятии)
