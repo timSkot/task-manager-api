@@ -24,6 +24,8 @@ internal/
     task_repository.go          — интерфейс TaskRepository + in-memory реализация
     postgres_task_repository.go — реализация на PostgreSQL
   service/            — бизнес-логика, валидация, обработка ошибок
+    task_service.go       — реализация
+    task_service_test.go  — юнит-тесты (mock TaskRepository)
   handler/            — HTTP-обработчики (парсинг запросов, статус-коды)
     middleware.go      — логирование запросов и запись метрик
     metrics.go          — определения метрик Prometheus
@@ -199,7 +201,27 @@ http_requests_total
 rate(http_requests_total[1m])
 ```
 
+## Тесты
+
+Service-слой покрыт юнит-тестами с mock-реализацией `TaskRepository` (`internal/service/task_service_test.go`) — для каждого метода проверяются как успешные сценарии, так и обработка ошибок (валидация, "не найдено", сбой репозитория).
+
+```bash
+go test ./internal/service/...
+```
+
+С подробным выводом по каждому тесту:
+
+```bash
+go test -v ./internal/service/...
+```
+
+С отчётом о покрытии:
+
+```bash
+go test -cover ./internal/service/...
+```
+
 ## Планы по развитию
 
-- [ ] Юнит-тесты для service-слоя (с mock-реализацией `TaskRepository`)
 - [ ] Grafana для визуализации метрик поверх Prometheus
+- [ ] Тесты для handler-слоя (httptest)
