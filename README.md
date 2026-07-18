@@ -236,8 +236,3 @@ go test -v ./internal/service/...
 ```bash
 go test -cover ./internal/service/...
 ```
-
-## Планы по развитию
-
-- [ ] Тесты для handler-слоя (httptest)
-- [ ] Провижининг дашборда Grafana как кода (чтобы не настраивать вручную при каждом поднятии)
